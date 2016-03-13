@@ -3,10 +3,40 @@
 <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
     
 </head>
 <body>
-    <div id="myDiv" style="width: 480px; height: 400px;"><!-- Plotly chart will be drawn inside this DIV --></div>
+    <div class="container">
+        <form class="form-inline">
+          <div class="form-group">
+            <label for="tNumber">Target number</label>
+            <input type="text" class="form-control" id="tNumber" value="42">
+          </div>
+          <div class="form-group">
+            <label for="popSize">Population Size</label>
+            <input type="text" class="form-control" id="popSize" value="100">
+          </div>            
+          <div class="form-group">
+            <label for="nGen">Generations</label>
+            <input type="number" class="form-control" id="nGen" value="1000">
+          </div>
+          <button class="btn btn-primary" id="sim">Simulate</button>
+        </form>
+        <div class="row">
+            <div class="col-md-6">            
+                <div id="myDiv" style="width: 480px; height: 400px;"><!-- Plotly chart will be drawn inside this DIV --></div>
+            </div>
+            <div class="col-md-6">
+                <div class="table-responsive">
+                    <table class="table table-condensed" id="pop"></table>
+                </div>
+            </div>        
+        </div>
+    </div>
+    
     <script src="js/simple-GA.js"></script>
+    
+    
 </body>
 </html>

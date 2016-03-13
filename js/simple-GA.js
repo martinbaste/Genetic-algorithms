@@ -19,22 +19,17 @@ function mutate(gen) {
     return gen
 }
 
+
+
 //Fitness and stuff
 
 
-function fitness(value) {
-    if (value == 42) {return 1};
-    return Math.round(1/Math.pow((42-value),2)*1000)/1000
+function fitness(value, tNumber) {
+    return Math.pow(tNumber-value,2);
 }
 
 function compare(a,b) {
-    if (a[2] < b[2]) {
-        return 1
-    } else if (a[2] > b[2]) {
-        return -1
-    } else {
-        return 0
-    }
+    return a[3] - b[3]
 }
         
 //Genotype to Phenotype
@@ -68,7 +63,7 @@ function operate(genotype, i) {
         if (isNaN(value1)) {
                 return 0
             }
-            return value1
+            return parseFloat(value1);
         }
             
     if (genotype[genotype.length-(i+2)] == '@' || genotype.length < 3 || genotype[genotype.length-(i+2)] == undefined) {
@@ -108,66 +103,146 @@ function genRInd (genLength) {
 function genRPop(size, genLength) {
     var population = [];
     for (var i = 0; i < size; i++) { 
-        population.push([i,genRInd(genLength), 0] );
+        population.push([i,genRInd(genLength), 0,0] );
     }
     return population
 }
 
+//Statistics
+
+function diversityInd(gen1,gen2) {
+    var d = 0;
+    for (var i = 0; i < gen1.length; i++) {
+        if (gen1[i] != gen2[i]) {
+            d += 1;
+        }
+    }
+    return d/gen1.length;
+}
 
 //Main
 
-function main () {
-    var size = 100;
-    var genLength = 40
-    var population = genRPop(size, genLength);
-    var remove = 2;
-    var generations = 1000;
+population = [];
+popList = [];
+
+function main (size, generations, tNumber) {
+    var size = parseInt(size);
+    var generations = parseInt(generations);
+    var tNumber = parseInt(tNumber);
+    var genLength = 10
+    population = genRPop(size, genLength);
+    var remove = Math.floor(size*0.2);
     var mutRate = 0.04
     var bestFitness = [];
+    var avFitness = [];
+    var diversity = [];
     var generationCount = []; //For plotting purposes
     var idCount = size;
     for (var gen = 0; gen < generations; gen++) {
-        generationCount.push(gen);
-        // Score them
-        for (var i = 0; i < population.length; i++) {
-            population[i][2] = fitness(express(population[i][1]));
+        
+        if (gen != 0) {
+            
+            
+        
+            //Reproduce!
+
+            population = population.slice(0, size-remove);
+            var elite = population.slice(0, remove/2);
+            for (var i = 0; i <= remove; i++) {
+                var ind1 = elite[Math.floor(Math.random() * elite.length)];
+                var ind2 = elite[Math.floor(Math.random() * elite.length)];
+                idCount += 1;
+                var newInd = [idCount, recombine(ind1[1],ind2[1])[Math.floor(Math.random() * 2)],0,0];
+                population.push(newInd);
+            }
+
+            //mutate
+
+            for (var i = 0; i < (size-(remove/2))*genLength*mutRate; i++) {
+                var ind = Math.floor(Math.random() * (population.length-(remove/2)))
+                population[ind][1] = mutate(population[ind+(remove/2)][1]);
+            }
         }
         
+        generationCount.push(gen);
+        // Score them
+        var accFit = 0;
+        for (var i = 0; i < population.length; i++) {
+            var ex = express(population[i][1]);
+            population[i][2] = ex;
+            population[i][3] = fitness(ex, tNumber);
+            accFit += population[i][3];
+        }
+        
+        avFitness.push(accFit/size);
             
         //Sort them
         
+        
+        
+    
+        
+        //Get Statistics
         population = population.sort(compare);
-        
-        bestFitness.push(population[0][2]);
-        
-        //Reproduce!
-        
-        population = population.slice(0, size-remove);
-        var elite = population.slice(0, remove/2);
-        for (var i = 0; i <= remove; i++) {
-            var ind1 = elite[Math.floor(Math.random() * elite.length)];
-            var ind2 = elite[Math.floor(Math.random() * elite.length)];
-            idCount += 1;
-            var newInd = [idCount, recombine(ind1[1],ind2[1])[Math.floor(Math.random() * 2)],0];
-            population.push(newInd);
+        popList.push($.extend(true, [], population));
+        //bestFitness.push(population[0][3]);
+        //console.log(gen, population[0])
+        var accDiv = 0;
+        var comparisons = 100;
+        for (var i = 0; i < comparisons; i++) {
+            var ind1 = population[Math.floor(Math.random() * population.length)];
+            var ind2 = population[Math.floor(Math.random() * population.length)];
+            accDiv += diversityInd(ind1[1],ind2[1]);
         }
+        diversity.push(accDiv/comparisons);
         
-        //mutate
-        
-        for (var i = 0; i < size*genLength*mutRate; i++) {
-            var ind = Math.floor(Math.random() * population.length)
-            population[ind][1] = mutate(population[ind][1]);
-        }
+        bestFitness.push(population[0].slice(3)[0]);
         
         
+
+        
+        
+    }
+    for (var gen = 0; gen < generations; gen++) {
+        bestFitness.push(popList[gen][0][3]);
     }
     var trace1 = {
         x: generationCount,
         y: bestFitness,
         type: 'scatter'
     };
+    var trace2 = {
+        x: generationCount,
+        y: avFitness,
+        type: 'scatter'
+    };
+    var trace3 = {
+        x: generationCount,
+        y: diversity,
+        type: 'scatter'
+    }
+    var data = [trace1, trace2, trace3];
     var data = [trace1];
     Plotly.newPlot('myDiv', data);
-    console.log(population[0])
+    drawTable(popList[popList.length-1]);
 }
 
+
+function drawTable (population) {
+    var HTML = '<tr><th>#</th><th>Value</th><th>Fitness<th><th>Gene<th><tr>';
+    for (var i = 0; i < population.length; i++) {
+        HTML += '<tr><td>' + population[i][0] + '</td><td>' + population[i][2] + '</td><td>' + population[i][3] + '</td><td>' + population[i][1] + '</td></tr>';
+    }
+    document.getElementById('pop').innerHTML = HTML;
+}
+
+
+$( document ).ready(function() {
+    $('#sim').click(function(e){
+        e.preventDefault();
+        var nGen = $('#nGen').val();
+        var pop = $('#popSize').val();
+        var num = $('#tNumber').val();
+        main(pop, nGen, num);
+    })
+});
