@@ -122,8 +122,6 @@ function diversityInd(gen1,gen2) {
 
 //Main
 
-population = [];
-popList = [];
 
 function main (size, generations, tNumber) {
     var size = parseInt(size);
@@ -133,9 +131,10 @@ function main (size, generations, tNumber) {
     population = genRPop(size, genLength);
     var remove = Math.floor(size*0.2);
     var mutRate = 0.04
-    var bestFitness = [];
     var avFitness = [];
     var diversity = [];
+    bestFitness = [];
+    popList = [];
     var generationCount = []; //For plotting purposes
     var idCount = size;
     for (var gen = 0; gen < generations; gen++) {
